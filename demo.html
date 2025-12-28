@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandRe Demo - Asset Integrity & Revenue Risk</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+        header {
+            background-color: #1a3c34;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { margin: 0; font-size: 1.5rem; }
+        .container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        /* Dashboard Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-fatal { background-color: #ffebee; color: #c62828; }
+        .badge-advisory { background-color: #fff3e0; color: #ef6c00; }
+        .badge-clean { background-color: #e8f5e9; color: #2e7d32; }
+
+        /* Workbench Styles */
+        .workbench-container {
+            display: flex;
+            height: calc(100vh - 100px);
+            gap: 20px;
+        }
+        .sidebar {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .main-panel {
+            flex: 2;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .req-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+        .req-item:hover { background-color: #f9f9f9; }
+        .req-item.active { background-color: #e3f2fd; }
+        .req-item.fatal { border-left-color: #c62828; }
+        .req-item.advisory { border-left-color: #ef6c00; }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: #1a3c34;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-secondary { background-color: #6c757d; }
+
+        .hidden { display: none; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>LandRe Demo</h1>
+    <nav>
+        <button class="btn btn-secondary" onclick="showDashboard()">Dashboard</button>
+    </nav>
+</header>
+
+<div id="dashboard" class="container">
+    <h2>Active Title Opinions</h2>
+    <div class="dashboard-grid">
+        <!-- Mock DTO 1 -->
+        <div class="card" onclick="loadDTO(1)">
+            <h3>DTO-2025-001 (Section 10)</h3>
+            <p style="color: #666; font-size: 0.9rem;">Uploaded: Dec 27, 2025</p>
+            <div class="stat-row">
+                <span class="badge badge-fatal">3 Fatal</span>
+                <span class="badge badge-advisory">2 Advisory</span>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem;">Revenue at Risk: <strong>$450,000</strong></p>
+        </div>
+        <!-- Mock DTO 2 -->
+        <div class="card" onclick="loadDTO(2)">
+            <h3>DTO-2025-004 (Section 11)</h3>
+            <p style="color: #666; font-size: 0.9rem;">Uploaded: Dec 28, 2025</p>
+            <div class="stat-row">
+                <span class="badge badge-clean">Clean</span>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem;">Revenue at Risk: <strong>$0</strong></p>
+        </div>
+         <!-- Mock DTO 3 -->
+         <div class="card" onclick="loadDTO(3)">
+            <h3>DTO-2025-012 (Smith Heirs)</h3>
+            <p style="color: #666; font-size: 0.9rem;">Uploaded: Dec 20, 2025</p>
+            <div class="stat-row">
+                <span class="badge badge-fatal">1 Fatal</span>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem;">Revenue at Risk: <strong>$12,500</strong></p>
+        </div>
+    </div>
+</div>
+
+<div id="workbench" class="container hidden">
+    <div style="margin-bottom: 20px;">
+        <h2 id="wb-title">DTO Details</h2>
+        <span class="badge badge-advisory">Processing</span>
+    </div>
+
+    <div class="workbench-container">
+        <!-- Left Sidebar: Requirements List -->
+        <div class="sidebar" id="req-list">
+            <!-- Populated via JS -->
+        </div>
+
+        <!-- Main Panel: Details & Actions -->
+        <div class="main-panel">
+            <div id="empty-state" style="text-align: center; color: #999; margin-top: 50px;">
+                <p>Select a requirement to view details</p>
+            </div>
+
+            <div id="req-details" class="hidden">
+                <div style="background-color: #fafafa; padding: 15px; border: 1px solid #eee; margin-bottom: 20px;">
+                    <h4>Extraction Preview</h4>
+                    <p id="req-source-text" style="font-family: monospace; white-space: pre-wrap;"></p>
+                </div>
+
+                <h3>Curative Actions</h3>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="req-status" onchange="updateStatus()">
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="CURED">Cured</option>
+                        <option value="WAIVED">Waived</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assign Broker / Agent</label>
+                    <input type="text" id="req-assignee" placeholder="e.g. John Landman">
+                </div>
+                <div class="form-group">
+                    <label>Notes & Rationale</label>
+                    <textarea rows="4" placeholder="Enter curative steps or waiver rationale..."></textarea>
+                </div>
+                <button class="btn" onclick="saveReq()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mock Data
+    const dtos = {
+        1: {
+            title: "DTO-2025-001 (Section 10)",
+            reqs: [
+                { id: 101, title: "Requirement 1", type: "fatal", status: "OPEN", text: "Break in chain of title for John Doe (1998 Deed missing marital status). This is a FATAL defect preventing payment." },
+                { id: 102, title: "Requirement 2", type: "advisory", status: "OPEN", text: "Lease for Jane Smith expiring in 6 months. Monitor primary term." },
+                { id: 103, title: "Requirement 3", type: "fatal", status: "IN_PROGRESS", text: "Unreleased mortgage from 2005. Needs release from Bank of America." }
+            ]
+        },
+        2: {
+            title: "DTO-2025-004 (Section 11)",
+            reqs: [] // Clean
+        },
+        3: {
+            title: "DTO-2025-012 (Smith Heirs)",
+            reqs: [
+                { id: 301, title: "Requirement 1", type: "fatal", status: "OPEN", text: "Probate for Robert Smith not filed in county records." }
+            ]
+        }
+    };
+
+    let currentDtoId = null;
+    let currentReqId = null;
+
+    function showDashboard() {
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('workbench').classList.add('hidden');
+    }
+
+    function loadDTO(id) {
+        currentDtoId = id;
+        const data = dtos[id];
+
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('workbench').classList.remove('hidden');
+        document.getElementById('wb-title').innerText = data.title;
+
+        // Populate Sidebar
+        const listEl = document.getElementById('req-list');
+        listEl.innerHTML = '<h3>Requirements</h3>';
+
+        if(data.reqs.length === 0) {
+            listEl.innerHTML += '<p style="padding:10px; color:#666;">No defects found. Marketable Title.</p>';
+        } else {
+            data.reqs.forEach(req => {
+                const item = document.createElement('div');
+                item.className = `req-item ${req.type}`;
+                item.id = `req-item-${req.id}`;
+                item.innerHTML = `
+                    <strong>${req.title}</strong> <span style="font-size:0.8em">(${req.status})</span>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 3px;">${req.text.substring(0, 50)}...</div>
+                `;
+                item.onclick = () => loadReq(req);
+                listEl.appendChild(item);
+            });
+        }
+
+        // Reset Main Panel
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('req-details').classList.add('hidden');
+    }
+
+    function loadReq(req) {
+        currentReqId = req.id;
+
+        // Update Active Class
+        document.querySelectorAll('.req-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`req-item-${req.id}`).classList.add('active');
+
+        // Populate Form
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('req-details').classList.remove('hidden');
+
+        document.getElementById('req-source-text').innerText = req.text;
+        document.getElementById('req-status').value = req.status;
+        document.getElementById('req-assignee').value = ""; // Reset for demo
+    }
+
+    function updateStatus() {
+        const newStatus = document.getElementById('req-status').value;
+        // In a real app, we'd save this. Here we just update the list view.
+        const req = dtos[currentDtoId].reqs.find(r => r.id === currentReqId);
+        if(req) req.status = newStatus;
+
+        // Re-render list item text (simplified)
+        const item = document.getElementById(`req-item-${currentReqId}`);
+        item.querySelector('span').innerText = `(${newStatus})`;
+    }
+
+    function saveReq() {
+        alert("Changes saved to Curative Log!");
+        updateStatus();
+    }
+</script>
+
+</body>
+</html>
